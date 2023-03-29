@@ -1,0 +1,97 @@
+﻿@using Alfie.Models
+@using Alfie.Services
+
+@inject CognitiveService CognitiveService
+@inject OpenAiService OpenAiApiService
+
+<div class="chat-container">
+    <div class="messages">
+        @foreach (var message in Messages)
+        {
+            <ChatMessage Message="message" />
+        }
+    </div>
+    <div class="input-area">
+        <input @bind="InputText" @onkeyup="HandleKeyUp" placeholder="Type your message..." />
+        <button @onclick="SendMessageAsync" title="Send message">
+            <span class="oi oi-location" aria-hidden="true"></span>
+        </button>
+        <button @onclick="StartRecordingAsync" title="Record audio message">
+            <span class="oi oi-microphone" aria-hidden="true"></span>
+        </button>
+    </div>
+</div>
+
+@code {
+    private List<Message> Messages { get; set; } = new List<Message>();
+    private string InputText { get; set; } = string.Empty;
+
+    private async Task SendMessageAsync()
+    {
+        // Implement the logic for sending messages here.
+        // For now, just add the message to the list.
+        Messages.Add(new Message
+            {
+                Content = InputText,
+                CssClass = "message-sent", 
+                Timestamp = DateTime.Now
+            });
+
+        var response = await CommunicateWithChatModelAsync(InputText);
+        await ConvertAlfiesResponseToSpeechAsync(response);
+
+        InputText = string.Empty;
+    }
+
+    private async Task StartRecordingAsync()
+    {
+        var prompt = await GetTextFromSpeechAsync();
+        var response = await CommunicateWithChatModelAsync(prompt);
+        await ConvertAlfiesResponseToSpeechAsync(response);
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessageAsync();
+        }
+    }
+
+    private async Task<string> GetTextFromSpeechAsync()
+    {
+        var myPrompt = await CognitiveService.ConvertSpeechToTextAsync();
+
+        Messages.Add(new Message
+        {
+            Content = myPrompt,
+            CssClass = "message-sent",
+            Timestamp = DateTime.Now
+        });
+
+        StateHasChanged();
+
+        return myPrompt;
+    }
+
+    private async Task<string> CommunicateWithChatModelAsync(string prompt)
+    {
+        var alfiesResponse = await OpenAiApiService.SendMessageToChatModelAsync(prompt);
+
+        Messages.Add(new Message
+        {
+            Content = alfiesResponse,
+            CssClass = "message-received", 
+            Timestamp = DateTime.Now
+        });
+
+        StateHasChanged();
+
+        return alfiesResponse;
+    }
+
+    private async Task ConvertAlfiesResponseToSpeechAsync(string alfiesResponse)
+    {
+        await CognitiveService.ConvertTextToSpeechAsync(alfiesResponse);
+    }
+}

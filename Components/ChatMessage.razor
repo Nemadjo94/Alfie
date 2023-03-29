@@ -1,0 +1,10 @@
+﻿@using Alfie.Models
+
+<div class="chat-message @Message.CssClass">
+    <span class="message-content">@Message.Content</span>
+    <span class="message-timestamp">@Message.Timestamp.ToString("HH:mm")</span>
+</div>
+
+@code {
+    [Parameter] public Message Message { get; set; }
+}
