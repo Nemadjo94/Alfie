@@ -16,15 +16,37 @@
         <button @onclick="SendMessageAsync" title="Send message">
             <span class="oi oi-location" aria-hidden="true"></span>
         </button>
-        <button @onclick="StartRecordingAsync" title="Record audio message">
-            <span class="oi oi-microphone" aria-hidden="true"></span>
-        </button>
+
+        @if (!IsSpeechOn)
+        {
+            <button @onclick="StartRecordingAsync" title="Record audio message">
+                <span class="oi oi-microphone" aria-hidden="true"></span>
+            </button>
+        }
+
+        @if (IsSpeechOn)
+        {
+            <button @onclick="StopReadingMessageAsync" title="Stop speech">
+                <span class="oi oi-media-stop" aria-hidden="true"></span>
+            </button>
+        }
     </div>
 </div>
 
 @code {
     private List<Message> Messages { get; set; } = new List<Message>();
+
     private string InputText { get; set; } = string.Empty;
+
+    private bool IsSpeechOn { get; set; }
+
+
+    private async Task StopReadingMessageAsync()
+    {
+        await CognitiveService.CancelSpeechAsync();
+        IsSpeechOn = false;
+        StateHasChanged();
+    }
 
     private async Task SendMessageAsync()
     {
@@ -92,6 +114,10 @@
 
     private async Task ConvertAlfiesResponseToSpeechAsync(string alfiesResponse)
     {
+        IsSpeechOn = true;
+        StateHasChanged();
         await CognitiveService.ConvertTextToSpeechAsync(alfiesResponse);
+        IsSpeechOn = false;
+        StateHasChanged();
     }
 }

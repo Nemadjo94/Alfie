@@ -6,10 +6,13 @@ namespace Alfie.Services
     {
         private SpeechConfig SpeechConfig { get; set; }
 
+        private SpeechSynthesizer SpeechSynthesizer { get; set; }
+
         public CognitiveService(string subscriptionKey, string subscriptionRegion)
         {
             SpeechConfig = SpeechConfig.FromSubscription(subscriptionKey, subscriptionRegion);
-            SpeechConfig.SpeechSynthesisVoiceName = "en-GB-RyanNeural";
+            SpeechConfig.SpeechSynthesisVoiceName = "en-US-NancyNeural";
+            SpeechSynthesizer = new SpeechSynthesizer(SpeechConfig);
         }
 
         public async Task<string> ConvertSpeechToTextAsync()
@@ -26,8 +29,7 @@ namespace Alfie.Services
         public async Task ConvertTextToSpeechAsync(string text)
         {
             // use the default speaker as audio output.
-            using var synthesizer = new SpeechSynthesizer(SpeechConfig);
-            using var result = await synthesizer.SpeakTextAsync(text);
+            using var result = await SpeechSynthesizer.SpeakTextAsync(text);
             if (result.Reason == ResultReason.SynthesizingAudioCompleted)
             {
                 Console.WriteLine($"Speech synthesized for text [{text}]");
@@ -44,6 +46,11 @@ namespace Alfie.Services
                     Console.WriteLine($"CANCELED: Did you update the subscription info?");
                 }
             }
+        }
+
+        public async Task CancelSpeechAsync()
+        {
+            await SpeechSynthesizer.StopSpeakingAsync();
         }
     }
 }

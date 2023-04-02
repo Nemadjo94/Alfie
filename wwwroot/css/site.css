@@ -176,3 +176,8 @@ button {
     button:active {
         background-color: #007cb0;
     }
+
+.chat-message-playback-button {
+    width: 30px;
+    height: 30px;
+}

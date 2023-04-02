@@ -1,10 +1,45 @@
 ﻿@using Alfie.Models
+@using Alfie.Services
+
+@inject CognitiveService CognitiveService
 
 <div class="chat-message @Message.CssClass">
     <span class="message-content">@Message.Content</span>
     <span class="message-timestamp">@Message.Timestamp.ToString("HH:mm")</span>
+
+    @if (Message.CssClass == "message-received" && !IsSpeechOn)
+    {
+        <button class="chat-message-playback-button" @onclick="StartReadingMessageAsync" title="Read message">
+            <span class="oi oi-media-play" aria-hidden="true"></span>
+        </button>
+    }
+    @if (IsSpeechOn)
+    {
+        <button class="chat-message-playback-button" @onclick="StopReadingMessageAsync" title="Stop reading message">
+            <span class="oi oi-media-stop" aria-hidden="true"></span>
+        </button>
+    }
 </div>
 
 @code {
     [Parameter] public Message Message { get; set; }
+
+    private bool IsSpeechOn { get; set; }
+
+
+    private async Task StartReadingMessageAsync()
+    {
+        IsSpeechOn = true;
+        StateHasChanged();
+        await CognitiveService.ConvertTextToSpeechAsync(Message.Content);
+        IsSpeechOn = false;
+        StateHasChanged();
+    }
+
+    private async Task StopReadingMessageAsync()
+    {
+        await CognitiveService.CancelSpeechAsync();
+        IsSpeechOn = false;
+        StateHasChanged();
+    }
 }
